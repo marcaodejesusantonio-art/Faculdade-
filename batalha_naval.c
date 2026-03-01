@@ -1,85 +1,149 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-#define TAMANHO 10
-#define LIMITE_JOGADAS 20
+#define TAM 10
+#define MAX_JOGADAS 20
 
-// Função para desenhar o tabuleiro
-void exibirTabuleiro(int tab[TAMANHO][TAMANHO], bool revelarNavios) {
+// Códigos do tabuleiro (fica bem mais legível do que "números mágicos")
+#define AGUA           0
+#define NAVIO          3
+#define ACERTO         1
+#define ERRO           2
+#define AREA_EFEITO    5
+
+void imprimirCabecalho(void) {
     printf("\n    ");
-    for (int j = 0; j < TAMANHO; j++) printf("%d ", j);
+    for (int c = 0; c < TAM; c++) printf("%d ", c);
     printf("\n   ---------------------\n");
+}
 
-    for (int i = 0; i < TAMANHO; i++) {
-        printf("%d | ", i);
-        for (int j = 0; j < TAMANHO; j++) {
-            if (tab[i][j] == 3 && !revelarNavios) printf("~ "); 
-            else if (tab[i][j] == 3) printf("N "); // Navio
-            else if (tab[i][j] == 1) printf("X "); // Acerto
-            else if (tab[i][j] == 5) printf("* "); // Área de Efeito
-            else if (tab[i][j] == 2) printf("O "); // Água (Tiro Errado)
-            else printf("~ ");
+// Mostra o tabuleiro.
+// revelarNavios = false -> navios ficam escondidos
+// revelarNavios = true  -> mostra tudo no final
+void mostrarTabuleiro(int tab[TAM][TAM], bool revelarNavios) {
+    imprimirCabecalho();
+
+    for (int l = 0; l < TAM; l++) {
+        printf("%d | ", l);
+
+        for (int c = 0; c < TAM; c++) {
+            int celula = tab[l][c];
+
+            if (celula == NAVIO && !revelarNavios) {
+                printf("~ ");
+            } else if (celula == NAVIO) {
+                printf("N ");
+            } else if (celula == ACERTO) {
+                printf("X ");
+            } else if (celula == AREA_EFEITO) {
+                printf("* ");
+            } else if (celula == ERRO) {
+                printf("O ");
+            } else {
+                printf("~ ");
+            }
         }
+
         printf("\n");
     }
 }
 
-int main() {
-    int tabuleiro[TAMANHO][TAMANHO] = {0};
-    int linha, coluna, jogadas = 0;
-    int acertos = 0;
+bool coordenadaValida(int l, int c) {
+    return (l >= 0 && l < TAM && c >= 0 && c < TAM);
+}
 
-    // Posicionando Navios (Conforme pede o exercício)
-    tabuleiro[2][3] = 3; tabuleiro[2][4] = 3; 
-    tabuleiro[5][5] = 3; tabuleiro[6][5] = 3;
+// Habilidade especial: quando o jogador atira em (9,9),
+// explode uma cruz no centro (4,4) (linha e coluna do centro).
+void ativarHabilidadeEspecial(int tab[TAM][TAM], int *acertos) {
+    printf("\n💥 >>> HABILIDADE ESPECIAL ATIVADA! Explosão em cruz no centro (4,4)! <<< 💥\n");
 
-    printf("--- OCEANIC GAMES: BATALHA NAVAL ---\n");
+    const int centroL = 4;
+    const int centroC = 4;
 
-    while (jogadas < LIMITE_JOGADAS) {
-        printf("\n--- RODADA %d/%d | ACERTOS: %d ---\n", jogadas + 1, LIMITE_JOGADAS, acertos);
-        exibirTabuleiro(tabuleiro, false);
-        
-        printf("\nDigite Linha e Coluna (ex: 2 4) ou -1 para sair: ");
-        if (scanf("%d", &linha) && linha == -1) break;
-        scanf("%d", &coluna);
-
-        if (linha < 0 || linha >= TAMANHO || coluna < 0 || coluna >= TAMANHO) {
-            printf("\n[!] Coordenada invalida!\n");
-            continue; 
-        }
-
-        // --- Lógica de Habilidade Especial (Área de Efeito em Cruz) ---
-        // Se o jogador acertar a quina (9,9), ativa uma bomba em cruz no centro
-        if (linha == 9 && coluna == 9) {
-            printf("\n>>> HABILIDADE ESPECIAL ATIVADA NO CENTRO! <<<\n");
-            int cx = 4, cy = 4; // Centro do efeito
-            for(int i = 0; i < TAMANHO; i++) {
-                for(int j = 0; j < TAMANHO; j++) {
-                    if (i == cx || j == cy) { // Se estiver na mesma linha ou coluna do centro
-                        if (tabuleiro[i][j] == 3) { 
-                            tabuleiro[i][j] = 1; acertos++; 
-                        } else if (tabuleiro[i][j] == 0) {
-                            tabuleiro[i][j] = 5; 
-                        }
-                    }
+    for (int l = 0; l < TAM; l++) {
+        for (int c = 0; c < TAM; c++) {
+            if (l == centroL || c == centroC) {
+                if (tab[l][c] == NAVIO) {
+                    tab[l][c] = ACERTO;
+                    (*acertos)++;
+                } else if (tab[l][c] == AGUA) {
+                    tab[l][c] = AREA_EFEITO;
                 }
             }
-        } 
-        // Tiro Normal
-        else if (tabuleiro[linha][coluna] == 3) {
-            printf("\n>>> ALVO ATINGIDO! <<<\n");
-            tabuleiro[linha][coluna] = 1;
+        }
+    }
+}
+
+int main(void) {
+    int tabuleiro[TAM][TAM] = {0};
+
+    int linha = 0, coluna = 0;
+    int jogadas = 0;
+    int acertos = 0;
+
+    // Posicionando navios (como no exercício)
+    tabuleiro[2][3] = NAVIO; tabuleiro[2][4] = NAVIO;
+    tabuleiro[5][5] = NAVIO; tabuleiro[6][5] = NAVIO;
+
+    printf("=== OCEANIC GAMES: BATALHA NAVAL ===\n");
+    printf("Regras rápidas:\n");
+    printf("- Digite linha e coluna (ex: 2 4)\n");
+    printf("- Digite -1 para sair\n");
+    printf("- Se você atirar em (9,9), ativa a habilidade especial!\n");
+
+    while (jogadas < MAX_JOGADAS) {
+        printf("\n--- Rodada %d/%d | Acertos: %d ---\n", jogadas + 1, MAX_JOGADAS, acertos);
+        mostrarTabuleiro(tabuleiro, false);
+
+        printf("\nDigite Linha e Coluna (ex: 2 4) ou -1 para sair: ");
+
+        if (scanf("%d", &linha) != 1) {
+            printf("\n[!] Entrada inválida. Encerrando.\n");
+            break;
+        }
+
+        if (linha == -1) {
+            printf("\nSaindo do jogo... até a próxima!\n");
+            break;
+        }
+
+        if (scanf("%d", &coluna) != 1) {
+            printf("\n[!] Entrada inválida. Encerrando.\n");
+            break;
+        }
+
+        if (!coordenadaValida(linha, coluna)) {
+            printf("\n[!] Coordenada fora do mapa! Tente algo entre 0 e 9.\n");
+            continue; // não conta jogada
+        }
+
+        // Evita contar duas vezes a mesma casa
+        if (tabuleiro[linha][coluna] == ACERTO || tabuleiro[linha][coluna] == ERRO || tabuleiro[linha][coluna] == AREA_EFEITO) {
+            printf("\n[!] Você já tentou essa posição. Escolha outra!\n");
+            continue; // não conta jogada
+        }
+
+        // Habilidade especial
+        if (linha == 9 && coluna == 9) {
+            ativarHabilidadeEspecial(tabuleiro, &acertos);
+        }
+        // Tiro normal
+        else if (tabuleiro[linha][coluna] == NAVIO) {
+            printf("\n🎯 >>> ALVO ATINGIDO! <<<\n");
+            tabuleiro[linha][coluna] = ACERTO;
             acertos++;
         } else {
-            printf("\n--- Agua... ---\n");
-            tabuleiro[linha][coluna] = 2;
+            printf("\n🌊 Água... nada aqui.\n");
+            tabuleiro[linha][coluna] = ERRO;
         }
 
         jogadas++;
     }
 
-    printf("\nFIM DE JOGO! Mapa final:\n");
-    exibirTabuleiro(tabuleiro, true);
+    printf("\n=== FIM DE JOGO! ===\n");
+    printf("Mapa final (com navios revelados):\n");
+    mostrarTabuleiro(tabuleiro, true);
 
+    printf("\nPlacar: %d acerto(s) em %d jogada(s).\n", acertos, jogadas);
     return 0;
 }
