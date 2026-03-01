@@ -1,89 +1,94 @@
 #include <stdio.h>
 
+// Estrutura para guardar os dados de uma carta
+typedef struct {
+    char pais[50];
+    char cidade[50];
+    int populacao;
+    float area;
+    float pib;
+} Carta;
+
+// Remove o '\n' que o fgets coloca no final
+void removerQuebraLinha(char texto[]) {
+    int i = 0;
+    while (texto[i] != '\0') {
+        if (texto[i] == '\n') {
+            texto[i] = '\0';
+            break;
+        }
+        i++;
+    }
+}
+
+void cadastrarCarta(Carta *c, int numero) {
+    printf("\n==============================\n");
+    printf("   Cadastro da Carta %d\n", numero);
+    printf("==============================\n");
+
+    printf("Digite o país: ");
+    fgets(c->pais, sizeof(c->pais), stdin);
+    removerQuebraLinha(c->pais);
+
+    printf("Digite a cidade: ");
+    fgets(c->cidade, sizeof(c->cidade), stdin);
+    removerQuebraLinha(c->cidade);
+
+    printf("Digite a população: ");
+    scanf("%d", &c->populacao);
+
+    printf("Digite a área (km²): ");
+    scanf("%f", &c->area);
+
+    printf("Digite o PIB: ");
+    scanf("%f", &c->pib);
+
+    // Limpa o '\n' que sobra do scanf antes do próximo fgets
+    getchar();
+
+    printf("\n✅ Carta %d cadastrada com sucesso!\n", numero);
+}
+
+void mostrarCarta(Carta c, int numero) {
+    printf("\n=========== CARTA %d ===========\n", numero);
+    printf("País:       %s\n", c.pais);
+    printf("Cidade:     %s\n", c.cidade);
+    printf("População:  %d\n", c.populacao);
+    printf("Área:       %.2f km²\n", c.area);
+    printf("PIB:        %.2f\n", c.pib);
+}
+
 int main() {
+    Carta carta1, carta2;
 
-    // Carta 1
-    char pais1[50];
-    char cidade1[50];
-    int populacao1;
-    float area1;
-    float pib1;
+    printf("🎴 Bem-vindo ao cadastro do Super Trunfo!\n");
+    printf("Vamos preencher duas cartas.\n");
 
-    // Carta 2
-    char pais2[50];
-    char cidade2[50];
-    int populacao2;
-    float area2;
-    float pib2;
+    cadastrarCarta(&carta1, 1);
+    cadastrarCarta(&carta2, 2);
 
-    // ===== Cadastro Carta 1 =====
-    printf("=== Cadastro da Carta 1 ===\n");
+    // Exibição
+    mostrarCarta(carta1, 1);
+    mostrarCarta(carta2, 2);
 
-    printf("Pais: ");
-    scanf("%s", pais1);
+    // Densidade demográfica (com proteção contra divisão por zero)
+    float densidade1 = (carta1.area > 0) ? (carta1.populacao / carta1.area) : 0;
+    float densidade2 = (carta2.area > 0) ? (carta2.populacao / carta2.area) : 0;
 
-    printf("Cidade: ");
-    scanf("%s", cidade1);
+    printf("\n📌 Densidade Demográfica:\n");
+    printf("Carta 1: %.2f hab/km²\n", densidade1);
+    printf("Carta 2: %.2f hab/km²\n", densidade2);
 
-    printf("Populacao: ");
-    scanf("%d", &populacao1);
-
-    printf("Area (km2): ");
-    scanf("%f", &area1);
-
-    printf("PIB: ");
-    scanf("%f", &pib1);
-
-    // ===== Cadastro Carta 2 =====
-    printf("\n=== Cadastro da Carta 2 ===\n");
-
-    printf("Pais: ");
-    scanf("%s", pais2);
-
-    printf("Cidade: ");
-    scanf("%s", cidade2);
-
-    printf("Populacao: ");
-    scanf("%d", &populacao2);
-
-    printf("Area (km2): ");
-    scanf("%f", &area2);
-
-    printf("PIB: ");
-    scanf("%f", &pib2);
-
-    // ===== Exibição =====
-    printf("\n=== CARTA 1 ===\n");
-    printf("Pais: %s\n", pais1);
-    printf("Cidade: %s\n", cidade1);
-    printf("Populacao: %d\n", populacao1);
-    printf("Area: %.2f km2\n", area1);
-    printf("PIB: %.2f\n", pib1);
-
-    printf("\n=== CARTA 2 ===\n");
-    printf("Pais: %s\n", pais2);
-    printf("Cidade: %s\n", cidade2);
-    printf("Populacao: %d\n", populacao2);
-    printf("Area: %.2f km2\n", area2);
-    printf("PIB: %.2f\n", pib2);
-
-    // ===== Operadores Matemáticos =====
-    float densidade1 = populacao1 / area1;
-    float densidade2 = populacao2 / area2;
-
-    printf("\nDensidade Carta 1: %.2f\n", densidade1);
-    printf("Densidade Carta 2: %.2f\n", densidade2);
-
-    // ===== Operadores Relacionais (Super Trunfo) =====
-    printf("\n=== Comparacao por Populacao ===\n");
-
-    if (populacao1 > populacao2) {
-        printf("Carta 1 venceu!\n");
-    } else if (populacao2 > populacao1) {
-        printf("Carta 2 venceu!\n");
+    // Comparação por população
+    printf("\n⚔️  Batalha por População:\n");
+    if (carta1.populacao > carta2.populacao) {
+        printf("🏆 Carta 1 venceu!\n");
+    } else if (carta2.populacao > carta1.populacao) {
+        printf("🏆 Carta 2 venceu!\n");
     } else {
-        printf("Empate!\n");
+        printf("🤝 Empate!\n");
     }
 
+    printf("\nObrigado por jogar! \n");
     return 0;
 }
